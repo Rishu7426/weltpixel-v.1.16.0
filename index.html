@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WeltPixel v1.16.0 Interactive Release Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        body { font-family: 'Inter', sans-serif; }
+
+        /* Chart Container Styling Rules - Strictly Enforced */
+        .chart-wrapper {
+            position: relative;
+            width: 100%;
+            max-width: 100%; /* Constraint handled by grid/parent */
+            height: 300px;
+            max-height: 350px;
+            margin: 0 auto;
+        }
+
+        /* Custom Scrollbar for card lists */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f5f9; 
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #cbd5e1; 
+            border-radius: 3px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8; 
+        }
+
+        .card-hover:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+    </style>
+    <!-- Chosen Palette: Slate & Indigo
+         Background: Warm Neutral (Slate-50)
+         Primary: Indigo-600
+         Secondary/Success: Emerald-500
+         Critical/Error: Rose-500
+         Text: Slate-800
+    -->
+    
+    <!-- Application Structure Plan: 
+         1. Dashboard Layout: A central hub for developers to quickly assess the impact of the release.
+         2. Key Interactions:
+            - Category Filters: Users can toggle between technical domains (Architecture, Analytics, SEO, etc.).
+            - Dynamic Charts: Visualizing the ratio of Fixes vs. Features and updates per category.
+            - Card Grid: Detailed release notes presented as atomic cards, filterable by the charts/buttons.
+         3. Rationale: Release notes are often dry text. This structure transforms them into an exploratory tool, helping devs prioritize testing based on "Critical" architecture changes vs. routine fixes.
+    -->
+
+    <!-- Visualization & Content Choices:
+         1. Report Info: Distribution of changes by technical domain.
+            - Goal: Compare relative impact on different system parts.
+            - Method: Bar Chart (Chart.js).
+            - Interaction: Click bar to filter change cards.
+         2. Report Info: Type of change (New Feature vs. Fix vs. Improvement).
+            - Goal: Inform on the nature of the update.
+            - Method: Doughnut Chart (Chart.js).
+            - Interaction: Click segment to filter change cards.
+         3. Report Info: Specific Release Note Items.
+            - Goal: Detailed Information.
+            - Method: Interactive Card Grid (HTML/Tailwind).
+            - Interaction: Hover effects, Tag filtering.
+    -->
+
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. Charts via Chart.js Canvas. Icons via FontAwesome (CSS). -->
+</head>
+<body class="bg-slate-50 text-slate-800 antialiased min-h-screen flex flex-col">
+
+    <!-- Navbar -->
+    <nav class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center gap-3">
+                    <div class="bg-indigo-600 text-white p-2 rounded-lg">
+                        <i class="fa-solid fa-code-branch text-xl"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-xl font-bold text-slate-900 tracking-tight">WeltPixel <span class="text-indigo-600">v1.16.0</span></h1>
+                        <p class="text-xs text-slate-500 font-medium">Released Jan 7, 2026</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-4">
+                    <a href="#" class="text-sm font-medium text-slate-500 hover:text-indigo-600 transition-colors hidden sm:block">Docs</a>
+                    <button id="reset-filters" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-medium rounded-md transition-colors flex items-center gap-2">
+                        <i class="fa-solid fa-filter-circle-xmark"></i> Reset View
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
+
+        <!-- Intro Section -->
+        <section class="mb-10 text-center max-w-3xl mx-auto">
+            <h2 class="text-3xl font-bold text-slate-900 mb-4">Developer Release Overview</h2>
+            <p class="text-lg text-slate-600 leading-relaxed">
+                Welcome to the interactive changelog for <strong>WeltPixel v1.16.0</strong>. 
+                This update brings critical architectural shifts, including a mandatory move to Composer-only installation and a major Open Source migration. 
+                Use the dashboard below to analyze changes across Analytics, SEO, and Frontend systems to plan your upgrade strategy effectively.
+            </p>
+        </section>
+
+        <!-- KPI Cards -->
+        <section class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+            <!-- KPI 1: Critical -->
+            <div class="bg-white rounded-xl shadow-sm border border-rose-100 p-6 relative overflow-hidden group">
+                <div class="absolute right-0 top-0 h-full w-1 bg-rose-500"></div>
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-sm font-semibold text-rose-600 uppercase tracking-wide">Critical Actions</p>
+                        <h3 class="text-3xl font-bold text-slate-900 mt-2">2</h3>
+                        <p class="text-sm text-slate-500 mt-1">Architecture & Deployments</p>
+                    </div>
+                    <div class="p-3 bg-rose-50 rounded-lg text-rose-600">
+                        <i class="fa-solid fa-triangle-exclamation text-xl"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- KPI 2: Features -->
+            <div class="bg-white rounded-xl shadow-sm border border-emerald-100 p-6 relative overflow-hidden group">
+                <div class="absolute right-0 top-0 h-full w-1 bg-emerald-500"></div>
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-sm font-semibold text-emerald-600 uppercase tracking-wide">New Features</p>
+                        <h3 class="text-3xl font-bold text-slate-900 mt-2">5</h3>
+                        <p class="text-sm text-slate-500 mt-1">Across Analytics & Grid</p>
+                    </div>
+                    <div class="p-3 bg-emerald-50 rounded-lg text-emerald-600">
+                        <i class="fa-solid fa-wand-magic-sparkles text-xl"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- KPI 3: Fixes -->
+            <div class="bg-white rounded-xl shadow-sm border border-blue-100 p-6 relative overflow-hidden group">
+                <div class="absolute right-0 top-0 h-full w-1 bg-blue-500"></div>
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-sm font-semibold text-blue-600 uppercase tracking-wide">Fixes & Improvements</p>
+                        <h3 class="text-3xl font-bold text-slate-900 mt-2">7</h3>
+                        <p class="text-sm text-slate-500 mt-1">Stabilizing Core Logic</p>
+                    </div>
+                    <div class="p-3 bg-blue-50 rounded-lg text-blue-600">
+                        <i class="fa-solid fa-screwdriver-wrench text-xl"></i>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Charts Section -->
+        <section class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-10">
+            <!-- Chart 1: Distribution by Module -->
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                <div class="mb-4 border-b border-slate-100 pb-4">
+                    <h3 class="text-lg font-semibold text-slate-800">Changes by Domain</h3>
+                    <p class="text-sm text-slate-500">Click a bar to filter the change log below. Focus areas include Deployment and Analytics.</p>
+                </div>
+                <div class="chart-wrapper">
+                    <canvas id="categoryChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Chart 2: Type Breakdown -->
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                <div class="mb-4 border-b border-slate-100 pb-4">
+                    <h3 class="text-lg font-semibold text-slate-800">Update Types</h3>
+                    <p class="text-sm text-slate-500">Click a segment to see only New Features, Fixes, or Improvements.</p>
+                </div>
+                <div class="chart-wrapper">
+                    <canvas id="typeChart"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <!-- Interactive List Section -->
+        <section>
+            <div class="flex flex-col md:flex-row justify-between items-end md:items-center mb-6 gap-4">
+                <div>
+                    <h3 class="text-2xl font-bold text-slate-900">Change Log Details</h3>
+                    <p class="text-slate-500">Detailed breakdown of all items in release v1.16.0.</p>
+                </div>
+                <!-- Interactive Tag Filters (Alternative to Chart Click) -->
+                <div id="filter-container" class="flex flex-wrap gap-2">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+
+            <!-- The Grid -->
+            <div id="cards-grid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                <!-- Cards injected here by JS -->
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t border-slate-200 mt-auto py-8">
+        <div class="max-w-7xl mx-auto px-4 text-center">
+            <p class="text-slate-500 text-sm">Generated for WeltPixel v1.16.0 Analysis.</p>
+        </div>
+    </footer>
+
+    <script>
+        // --- Data Source ---
+        // Derived from the provided report
+        const releaseData = [
+            {
+                id: 1,
+                title: "Composer-Only Installation",
+                category: "Architecture",
+                type: "Critical",
+                description: "Composer is now the official and singular installation method for all WeltPixel products. Manual uploads are deprecated.",
+                icon: "fa-box-archive",
+                color: "rose"
+            },
+            {
+                id: 2,
+                title: "Open Source Migration",
+                category: "Architecture",
+                type: "Critical",
+                description: "Significant number of extensions (Free & Paid) moved to public GitHub repositories. Update composer.json required.",
+                icon: "fa-github",
+                color: "rose"
+            },
+            {
+                id: 3,
+                title: "DB Hygiene Script",
+                category: "Analytics",
+                type: "Improvement",
+                description: "New cleanup script runs during setup:upgrade to remove duplicate order entries in event push tables.",
+                icon: "fa-database",
+                color: "blue"
+            },
+            {
+                id: 4,
+                title: "GA4 Protocol Filtering",
+                category: "Analytics",
+                type: "Feature",
+                description: "Added filtering by 'Sent to Measurement Protocol' status in the Admin Order Grid.",
+                icon: "fa-filter",
+                color: "emerald"
+            },
+            {
+                id: 5,
+                title: "Auto Discount Filtering",
+                category: "Analytics",
+                type: "Feature",
+                description: "Added filtering by 'Google Automated Discount used' in the Admin Order Grid.",
+                icon: "fa-tag",
+                color: "emerald"
+            },
+            {
+                id: 6,
+                title: "Meta Pixel API Fix",
+                category: "Analytics",
+                type: "Fix",
+                description: "Fixed duplicate event processing caused by unhandled Meta API response code 100.",
+                icon: "fa-bug",
+                color: "slate"
+            },
+            {
+                id: 7,
+                title: "Bing UET Account Fix",
+                category: "Analytics",
+                type: "Fix",
+                description: "Resolved bug blocking frontend customer account creation when Bing UET addon was enabled.",
+                icon: "fa-user-slash",
+                color: "slate"
+            },
+            {
+                id: 8,
+                title: "Dynamic Structured Data",
+                category: "SEO",
+                type: "Feature",
+                description: "Structured Data now parses correctly when products contain Inline Widgets (prevents Google parsing errors).",
+                icon: "fa-google",
+                color: "emerald"
+            },
+            {
+                id: 9,
+                title: "CMS Schedule Update Fix",
+                category: "SEO",
+                type: "Fix",
+                description: "Fixed exception on Commerce/Enterprise CMS Pages using Schedule Update (Open Graph image issue).",
+                icon: "fa-calendar-xmark",
+                color: "slate"
+            },
+            {
+                id: 10,
+                title: "Success Page Map Fix",
+                category: "Frontend",
+                type: "Fix",
+                description: "Google Map now renders correctly for multi-line customer addresses on the success page.",
+                icon: "fa-map-location-dot",
+                color: "slate"
+            },
+            {
+                id: 11,
+                title: "Mega Menu Input Fix",
+                category: "Frontend",
+                type: "Fix",
+                description: "Fixed frontend error caused by non-numeric characters in 'Subcategory Distribution' setting.",
+                icon: "fa-bars",
+                color: "slate"
+            },
+            {
+                id: 12,
+                title: "Bundle Product Cart Fix",
+                category: "Catalog",
+                type: "Fix",
+                description: "Fixed bug preventing Bundle products from being added to cart in context of Automated Discounts.",
+                icon: "fa-cart-plus",
+                color: "slate"
+            },
+            {
+                id: 13,
+                title: "Feed Inheritance Logic",
+                category: "Catalog",
+                type: "Improvement",
+                description: "Simple products now correctly inherit images and Category Paths from Configurable parents in Product Feed.",
+                icon: "fa-sitemap",
+                color: "blue"
+            },
+            {
+                id: 14,
+                title: "Sale Price Error Handling",
+                category: "Catalog",
+                type: "Fix",
+                description: "Fixed error when mapping 'Sale Price' to an empty 'Special Price' attribute in Product Feed.",
+                icon: "fa-dollar-sign",
+                color: "slate"
+            }
+        ];
+
+        // --- State Management ---
+        let currentFilter = { type: 'all', value: null }; // type: 'category' | 'type' | 'all'
+
+        // --- DOM Elements ---
+        const gridEl = document.getElementById('cards-grid');
+        const filterContainerEl = document.getElementById('filter-container');
+        const resetBtn = document.getElementById('reset-filters');
+
+        // --- Chart Configs ---
+        const categoryCtx = document.getElementById('categoryChart').getContext('2d');
+        const typeCtx = document.getElementById('typeChart').getContext('2d');
+
+        // Helper to aggregate data
+        function countBy(data, key) {
+            return data.reduce((acc, item) => {
+                acc[item[key]] = (acc[item[key]] || 0) + 1;
+                return acc;
+            }, {});
+        }
+
+        const categoryCounts = countBy(releaseData, 'category');
+        const typeCounts = countBy(releaseData, 'type');
+
+        const chartColors = {
+            Architecture: '#e11d48', // Rose-600
+            Analytics: '#8b5cf6', // Violet-500
+            SEO: '#0ea5e9', // Sky-500
+            Frontend: '#f59e0b', // Amber-500
+            Catalog: '#10b981', // Emerald-500
+            
+            Critical: '#e11d48',
+            Feature: '#10b981',
+            Fix: '#64748b', // Slate-500
+            Improvement: '#3b82f6' // Blue-500
+        };
+
+        // --- Chart Objects ---
+        let barChart, doughnutChart;
+
+        function initCharts() {
+            // Bar Chart: Categories
+            barChart = new Chart(categoryCtx, {
+                type: 'bar',
+                data: {
+                    labels: Object.keys(categoryCounts),
+                    datasets: [{
+                        label: 'Changes',
+                        data: Object.values(categoryCounts),
+                        backgroundColor: Object.keys(categoryCounts).map(k => chartColors[k]),
+                        borderRadius: 6,
+                        barThickness: 40
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: (context) => `${context.raw} Items`
+                            }
+                        }
+                    },
+                    scales: {
+                        y: { beginAtZero: true, grid: { color: '#f1f5f9' } },
+                        x: { grid: { display: false } }
+                    },
+                    onClick: (e, activeElements) => {
+                        if (activeElements.length > 0) {
+                            const index = activeElements[0].index;
+                            const category = barChart.data.labels[index];
+                            applyFilter('category', category);
+                        }
+                    }
+                }
+            });
+
+            // Doughnut Chart: Types
+            doughnutChart = new Chart(typeCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(typeCounts),
+                    datasets: [{
+                        data: Object.values(typeCounts),
+                        backgroundColor: Object.keys(typeCounts).map(k => chartColors[k]),
+                        borderWidth: 0,
+                        hoverOffset: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'right', labels: { usePointStyle: true, boxWidth: 8 } }
+                    },
+                    cutout: '70%',
+                    onClick: (e, activeElements) => {
+                        if (activeElements.length > 0) {
+                            const index = activeElements[0].index;
+                            const type = doughnutChart.data.labels[index];
+                            applyFilter('type', type);
+                        }
+                    }
+                }
+            });
+        }
+
+        // --- Rendering Logic ---
+
+        function getCategoryBadgeColor(cat) {
+            const map = {
+                'Architecture': 'bg-rose-100 text-rose-700',
+                'Analytics': 'bg-violet-100 text-violet-700',
+                'SEO': 'bg-sky-100 text-sky-700',
+                'Frontend': 'bg-amber-100 text-amber-700',
+                'Catalog': 'bg-emerald-100 text-emerald-700'
+            };
+            return map[cat] || 'bg-slate-100 text-slate-700';
+        }
+
+        function getTypeBadgeColor(type) {
+            const map = {
+                'Critical': 'border-rose-200 text-rose-600',
+                'Feature': 'border-emerald-200 text-emerald-600',
+                'Fix': 'border-slate-200 text-slate-500',
+                'Improvement': 'border-blue-200 text-blue-600'
+            };
+            return map[type] || 'border-slate-200 text-slate-500';
+        }
+
+        function renderCards(data) {
+            gridEl.innerHTML = '';
+            
+            if (data.length === 0) {
+                gridEl.innerHTML = `<div class="col-span-full text-center py-12 text-slate-400">No changes match this filter.</div>`;
+                return;
+            }
+
+            data.forEach(item => {
+                const card = document.createElement('div');
+                card.className = `bg-white rounded-xl p-6 border border-slate-200 card-hover transition-all duration-300 flex flex-col h-full`;
+                
+                // Card Inner HTML
+                card.innerHTML = `
+                    <div class="flex justify-between items-start mb-4">
+                        <span class="px-2 py-1 rounded-md text-xs font-bold uppercase tracking-wider ${getCategoryBadgeColor(item.category)}">
+                            ${item.category}
+                        </span>
+                        <span class="px-2 py-1 rounded-full border text-xs font-medium ${getTypeBadgeColor(item.type)}">
+                            ${item.type}
+                        </span>
+                    </div>
+                    <div class="flex items-start gap-3 mb-3">
+                        <div class="mt-1 text-${item.color}-500 flex-shrink-0">
+                            <i class="fa-solid ${item.icon}"></i>
+                        </div>
+                        <h4 class="text-lg font-bold text-slate-800 leading-tight">${item.title}</h4>
+                    </div>
+                    <p class="text-slate-600 text-sm leading-relaxed flex-grow">
+                        ${item.description}
+                    </p>
+                `;
+                gridEl.appendChild(card);
+            });
+        }
+
+        function renderFilterButtons() {
+            // Render category buttons for manual filtering
+            const categories = ['All', ...Object.keys(categoryCounts)];
+            filterContainerEl.innerHTML = categories.map(cat => `
+                <button 
+                    onclick="applyFilter('${cat === 'All' ? 'all' : 'category'}', '${cat === 'All' ? null : cat}')"
+                    class="px-3 py-1 text-xs font-semibold rounded-full border transition-colors ${
+                        (currentFilter.value === cat || (cat === 'All' && currentFilter.type === 'all'))
+                        ? 'bg-indigo-600 text-white border-indigo-600 shadow-md' 
+                        : 'bg-white text-slate-600 border-slate-200 hover:border-indigo-400'
+                    }"
+                >
+                    ${cat}
+                </button>
+            `).join('');
+        }
+
+        // --- Interaction Logic ---
+
+        function applyFilter(type, value) {
+            currentFilter = { type, value };
+            
+            let filteredData = releaseData;
+            if (type !== 'all') {
+                filteredData = releaseData.filter(item => item[type] === value);
+            }
+
+            renderCards(filteredData);
+            renderFilterButtons(); // Re-render to update active state
+        }
+
+        // --- Initialization ---
+        
+        resetBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            applyFilter('all', null);
+        });
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            initCharts();
+            renderCards(releaseData);
+            renderFilterButtons();
+        });
+
+    </script>
+</body>
+</html>
